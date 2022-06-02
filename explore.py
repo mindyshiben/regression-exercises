@@ -1,0 +1,603 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "09ac61ec",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import warnings\n",
+    "warnings.filterwarnings(\"ignore\")\n",
+    "\n",
+    "import pandas as pd\n",
+    "import numpy as np\n",
+    "\n",
+    "import matplotlib.pyplot as plt\n",
+    "import seaborn as sns\n",
+    "\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "from scipy.stats import pearsonr, spearmanr\n",
+    "\n",
+    "import env\n",
+    "import acquire\n",
+    "import wrangle"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "b2ff0d05",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df = acquire.get_zillow_data()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "2d164faa",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<class 'pandas.core.frame.DataFrame'>\n",
+      "RangeIndex: 2152863 entries, 0 to 2152862\n",
+      "Data columns (total 12 columns):\n",
+      " #   Column                        Dtype  \n",
+      "---  ------                        -----  \n",
+      " 0   Unnamed: 0                    int64  \n",
+      " 1   bedroomcnt                    float64\n",
+      " 2   bathroomcnt                   float64\n",
+      " 3   calculatedfinishedsquarefeet  float64\n",
+      " 4   taxvaluedollarcnt             float64\n",
+      " 5   yearbuilt                     float64\n",
+      " 6   taxamount                     float64\n",
+      " 7   fips                          float64\n",
+      " 8   assessmentyear                float64\n",
+      " 9   landtaxvaluedollarcnt         float64\n",
+      " 10  lotsizesquarefeet             float64\n",
+      " 11  regionidzip                   float64\n",
+      "dtypes: float64(11), int64(1)\n",
+      "memory usage: 197.1 MB\n"
+     ]
+    }
+   ],
+   "source": [
+    "df.info()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "5707d3b0",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.0186291463971465"
+      ]
+     },
+     "execution_count": 4,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.isna().sum().sum() / len(df)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "42979d24",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df = wrangle.wrangle_zillow(df)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "1625eda9",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<class 'pandas.core.frame.DataFrame'>\n",
+      "Int64Index: 2117309 entries, 4 to 2152861\n",
+      "Data columns (total 13 columns):\n",
+      " #   Column                 Dtype  \n",
+      "---  ------                 -----  \n",
+      " 0   Unnamed: 0             int64  \n",
+      " 1   bedrooms               float64\n",
+      " 2   bathrooms              float64\n",
+      " 3   square_feet            int64  \n",
+      " 4   value                  int64  \n",
+      " 5   year                   int64  \n",
+      " 6   tax                    float64\n",
+      " 7   fips                   int64  \n",
+      " 8   assessmentyear         float64\n",
+      " 9   landtaxvaluedollarcnt  float64\n",
+      " 10  lotsizesquarefeet      float64\n",
+      " 11  regionidzip            float64\n",
+      " 12  county                 object \n",
+      "dtypes: float64(7), int64(5), object(1)\n",
+      "memory usage: 226.2+ MB\n"
+     ]
+    }
+   ],
+   "source": [
+    "df.info()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "0f4623e8",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.rename(columns={'landtaxvaluedollarcnt': 'land_value', 'lotsizesquarefeet': 'lot_square_feet', 'regionidzip': 'zipcode'}, inplace=True) "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "57ee96e5",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<class 'pandas.core.frame.DataFrame'>\n",
+      "Int64Index: 2117309 entries, 4 to 2152861\n",
+      "Data columns (total 13 columns):\n",
+      " #   Column           Dtype  \n",
+      "---  ------           -----  \n",
+      " 0   Unnamed: 0       int64  \n",
+      " 1   bedrooms         float64\n",
+      " 2   bathrooms        float64\n",
+      " 3   square_feet      int64  \n",
+      " 4   value            int64  \n",
+      " 5   year             int64  \n",
+      " 6   tax              float64\n",
+      " 7   fips             int64  \n",
+      " 8   assessmentyear   float64\n",
+      " 9   land_value       float64\n",
+      " 10  lot_square_feet  float64\n",
+      " 11  zipcode          float64\n",
+      " 12  county           object \n",
+      "dtypes: float64(7), int64(5), object(1)\n",
+      "memory usage: 226.2+ MB\n"
+     ]
+    }
+   ],
+   "source": [
+    "df.info()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "854f1535",
+   "metadata": {},
+   "source": [
+    "### Hypotheses, Questions, what I want to explore-\n",
+    "\n",
+    "    - bedrooms, bathrooms, and square feet- want to assess this relationship\n",
+    "    - is the pecrentage of tax to value consistent based on county?\n",
+    "    - is tax impacted by year built?\n",
+    "    - what zipcodes fall under what fips?\n",
+    "    - what is the relationship of zipcode to value?\n",
+    "    - is home square feet or lot square feet more correlated to value?\n",
+    "    - how much are home square footage and lot square footage correlated to eachother?\n",
+    "    - how is year built related to value?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "b837aea6",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['zipcode'] = df['zipcode'].astype('int')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "1de76410",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "96322     483\n",
+       "97324     455\n",
+       "96151     451\n",
+       "399675    380\n",
+       "96323     340\n",
+       "97108     340\n",
+       "95993     301\n",
+       "96009     291\n",
+       "96207     289\n",
+       "96289     215\n",
+       "96434     206\n",
+       "96038     182\n",
+       "96226     175\n",
+       "95996     139\n",
+       "96039     102\n",
+       "95995      87\n",
+       "96148      46\n",
+       "96467      35\n",
+       "97092      34\n",
+       "97339      28\n",
+       "95998      20\n",
+       "97177      12\n",
+       "96002       9\n",
+       "97336       4\n",
+       "96859       2\n",
+       "96500       1\n",
+       "95991       1\n",
+       "96048       1\n",
+       "97088       1\n",
+       "95994       1\n",
+       "Name: zipcode, dtype: int64"
+      ]
+     },
+     "execution_count": 10,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.zipcode.value_counts().tail(30)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "069e84e7",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "## Why is 399675 a zipcode?\n",
+    "## I don't see anything that jumps out other than all in LA"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "id": "defecf6f",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>Unnamed: 0</th>\n",
+       "      <th>bedrooms</th>\n",
+       "      <th>bathrooms</th>\n",
+       "      <th>square_feet</th>\n",
+       "      <th>value</th>\n",
+       "      <th>year</th>\n",
+       "      <th>tax</th>\n",
+       "      <th>fips</th>\n",
+       "      <th>assessmentyear</th>\n",
+       "      <th>land_value</th>\n",
+       "      <th>lot_square_feet</th>\n",
+       "      <th>zipcode</th>\n",
+       "      <th>county</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>7165</th>\n",
+       "      <td>7165</td>\n",
+       "      <td>4.0</td>\n",
+       "      <td>4.0</td>\n",
+       "      <td>4280</td>\n",
+       "      <td>2724804</td>\n",
+       "      <td>1980</td>\n",
+       "      <td>37382.31</td>\n",
+       "      <td>6037</td>\n",
+       "      <td>2016.0</td>\n",
+       "      <td>1623703.0</td>\n",
+       "      <td>92746.0</td>\n",
+       "      <td>399675</td>\n",
+       "      <td>los_angeles</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>7166</th>\n",
+       "      <td>7166</td>\n",
+       "      <td>3.0</td>\n",
+       "      <td>3.0</td>\n",
+       "      <td>1987</td>\n",
+       "      <td>208877</td>\n",
+       "      <td>1981</td>\n",
+       "      <td>2886.80</td>\n",
+       "      <td>6037</td>\n",
+       "      <td>2016.0</td>\n",
+       "      <td>54036.0</td>\n",
+       "      <td>23671.0</td>\n",
+       "      <td>399675</td>\n",
+       "      <td>los_angeles</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>7167</th>\n",
+       "      <td>7167</td>\n",
+       "      <td>3.0</td>\n",
+       "      <td>2.0</td>\n",
+       "      <td>1895</td>\n",
+       "      <td>719700</td>\n",
+       "      <td>1962</td>\n",
+       "      <td>8945.78</td>\n",
+       "      <td>6037</td>\n",
+       "      <td>2016.0</td>\n",
+       "      <td>478141.0</td>\n",
+       "      <td>15772.0</td>\n",
+       "      <td>399675</td>\n",
+       "      <td>los_angeles</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>21235</th>\n",
+       "      <td>21235</td>\n",
+       "      <td>4.0</td>\n",
+       "      <td>4.0</td>\n",
+       "      <td>3568</td>\n",
+       "      <td>613776</td>\n",
+       "      <td>2006</td>\n",
+       "      <td>7639.93</td>\n",
+       "      <td>6037</td>\n",
+       "      <td>2016.0</td>\n",
+       "      <td>210022.0</td>\n",
+       "      <td>28595.0</td>\n",
+       "      <td>399675</td>\n",
+       "      <td>los_angeles</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>28597</th>\n",
+       "      <td>28597</td>\n",
+       "      <td>3.0</td>\n",
+       "      <td>2.0</td>\n",
+       "      <td>2264</td>\n",
+       "      <td>848586</td>\n",
+       "      <td>1955</td>\n",
+       "      <td>10261.75</td>\n",
+       "      <td>6037</td>\n",
+       "      <td>2016.0</td>\n",
+       "      <td>566808.0</td>\n",
+       "      <td>87400.0</td>\n",
+       "      <td>399675</td>\n",
+       "      <td>los_angeles</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>...</th>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "      <td>...</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2149192</th>\n",
+       "      <td>2149192</td>\n",
+       "      <td>4.0</td>\n",
+       "      <td>3.0</td>\n",
+       "      <td>3230</td>\n",
+       "      <td>546982</td>\n",
+       "      <td>1978</td>\n",
+       "      <td>6898.67</td>\n",
+       "      <td>6037</td>\n",
+       "      <td>2016.0</td>\n",
+       "      <td>176393.0</td>\n",
+       "      <td>20050.0</td>\n",
+       "      <td>399675</td>\n",
+       "      <td>los_angeles</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2149193</th>\n",
+       "      <td>2149193</td>\n",
+       "      <td>3.0</td>\n",
+       "      <td>2.0</td>\n",
+       "      <td>1352</td>\n",
+       "      <td>685293</td>\n",
+       "      <td>1954</td>\n",
+       "      <td>8346.39</td>\n",
+       "      <td>6037</td>\n",
+       "      <td>2016.0</td>\n",
+       "      <td>558387.0</td>\n",
+       "      <td>7615.0</td>\n",
+       "      <td>399675</td>\n",
+       "      <td>los_angeles</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2149194</th>\n",
+       "      <td>2149194</td>\n",
+       "      <td>3.0</td>\n",
+       "      <td>2.0</td>\n",
+       "      <td>1832</td>\n",
+       "      <td>358930</td>\n",
+       "      <td>1954</td>\n",
+       "      <td>4542.88</td>\n",
+       "      <td>6037</td>\n",
+       "      <td>2016.0</td>\n",
+       "      <td>144575.0</td>\n",
+       "      <td>8259.0</td>\n",
+       "      <td>399675</td>\n",
+       "      <td>los_angeles</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2149195</th>\n",
+       "      <td>2149195</td>\n",
+       "      <td>3.0</td>\n",
+       "      <td>4.0</td>\n",
+       "      <td>5158</td>\n",
+       "      <td>1042677</td>\n",
+       "      <td>1987</td>\n",
+       "      <td>12826.38</td>\n",
+       "      <td>6037</td>\n",
+       "      <td>2016.0</td>\n",
+       "      <td>561332.0</td>\n",
+       "      <td>49560.0</td>\n",
+       "      <td>399675</td>\n",
+       "      <td>los_angeles</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2149196</th>\n",
+       "      <td>2149196</td>\n",
+       "      <td>4.0</td>\n",
+       "      <td>4.0</td>\n",
+       "      <td>3869</td>\n",
+       "      <td>5044253</td>\n",
+       "      <td>1950</td>\n",
+       "      <td>64693.61</td>\n",
+       "      <td>6037</td>\n",
+       "      <td>2016.0</td>\n",
+       "      <td>4837147.0</td>\n",
+       "      <td>194594.0</td>\n",
+       "      <td>399675</td>\n",
+       "      <td>los_angeles</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "<p>380 rows × 13 columns</p>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "         Unnamed: 0  bedrooms  bathrooms  square_feet    value  year  \\\n",
+       "7165           7165       4.0        4.0         4280  2724804  1980   \n",
+       "7166           7166       3.0        3.0         1987   208877  1981   \n",
+       "7167           7167       3.0        2.0         1895   719700  1962   \n",
+       "21235         21235       4.0        4.0         3568   613776  2006   \n",
+       "28597         28597       3.0        2.0         2264   848586  1955   \n",
+       "...             ...       ...        ...          ...      ...   ...   \n",
+       "2149192     2149192       4.0        3.0         3230   546982  1978   \n",
+       "2149193     2149193       3.0        2.0         1352   685293  1954   \n",
+       "2149194     2149194       3.0        2.0         1832   358930  1954   \n",
+       "2149195     2149195       3.0        4.0         5158  1042677  1987   \n",
+       "2149196     2149196       4.0        4.0         3869  5044253  1950   \n",
+       "\n",
+       "              tax  fips  assessmentyear  land_value  lot_square_feet  zipcode  \\\n",
+       "7165     37382.31  6037          2016.0   1623703.0          92746.0   399675   \n",
+       "7166      2886.80  6037          2016.0     54036.0          23671.0   399675   \n",
+       "7167      8945.78  6037          2016.0    478141.0          15772.0   399675   \n",
+       "21235     7639.93  6037          2016.0    210022.0          28595.0   399675   \n",
+       "28597    10261.75  6037          2016.0    566808.0          87400.0   399675   \n",
+       "...           ...   ...             ...         ...              ...      ...   \n",
+       "2149192   6898.67  6037          2016.0    176393.0          20050.0   399675   \n",
+       "2149193   8346.39  6037          2016.0    558387.0           7615.0   399675   \n",
+       "2149194   4542.88  6037          2016.0    144575.0           8259.0   399675   \n",
+       "2149195  12826.38  6037          2016.0    561332.0          49560.0   399675   \n",
+       "2149196  64693.61  6037          2016.0   4837147.0         194594.0   399675   \n",
+       "\n",
+       "              county  \n",
+       "7165     los_angeles  \n",
+       "7166     los_angeles  \n",
+       "7167     los_angeles  \n",
+       "21235    los_angeles  \n",
+       "28597    los_angeles  \n",
+       "...              ...  \n",
+       "2149192  los_angeles  \n",
+       "2149193  los_angeles  \n",
+       "2149194  los_angeles  \n",
+       "2149195  los_angeles  \n",
+       "2149196  los_angeles  \n",
+       "\n",
+       "[380 rows x 13 columns]"
+      ]
+     },
+     "execution_count": 12,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df[df.zipcode == 399675]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "295c2e6a",
+   "metadata": {},
+   "source": [
+    "plt.figure(figsize=(12,3))\n",
+    "df['zipcode'].plot(kind='bar')\n",
+    "plt.title('Zipcode Distribution for Los Angeles')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "d85422b2",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.fips.value_counts()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "7b392f44",
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.7"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
