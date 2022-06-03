@@ -11,7 +11,7 @@ def get_zillow_data():
     
     else:
         sql = '''
-        SELECT bedroomcnt, bathroomcnt, calculatedfinishedsquarefeet, taxvaluedollarcnt, yearbuilt, taxamount, fips, assessmentyear, landtaxvaluedollarcnt, lotsizesquarefeet, latitude, longitude
+        SELECT parcelid, bedroomcnt, bathroomcnt, calculatedfinishedsquarefeet, taxvaluedollarcnt, yearbuilt, taxamount, fips, assessmentyear, landtaxvaluedollarcnt, lotsizesquarefeet
         FROM properties_2017
         WHERE propertylandusetypeid = 261;
         '''
